@@ -4,14 +4,14 @@ pragma solidity >=0.7.0 <0.9.0;
 contract Election {
     address public admin;
     OrganizerDetails public organizer;
-    uint256 candidateCount;
+    uint256 public candidateCount;
     uint256 numOfBallots;
     mapping(uint256 => Candidate) public candidateDetails;
     mapping(address => Voter) public Voters; // array of eligible voters
     mapping(string => address) public blindedVotes; // array of blinded votes
-    mapping (string => bool) public usedSignatures;  // array of used signatures
-    mapping (uint256 => Ballot) public Ballots;  // array of used signatures
-    ElectionDetails electionDetails;
+    mapping(string => bool) public usedSignatures; // array of used signatures
+    mapping(uint256 => Ballot) public Ballots; // array of used signatures
+    ElectionDetails public electionDetails;
     bool public start;
     bool public end;
 
@@ -24,12 +24,15 @@ contract Election {
 
     modifier onlyAdmin() {
         // Modifier for only admin access
-        require(msg.sender == admin);
+        require(msg.sender == admin, "Caller is not Admin");
         _;
     }
 
     modifier onlyOrganizer() {
-        require(msg.sender == organizer.organizerAddress);
+        require(
+            msg.sender == organizer.organizerAddress,
+            "Caller is not organizer"
+        );
         _;
     }
 
@@ -65,6 +68,7 @@ contract Election {
     struct ElectionDetails {
         string adminName;
         string adminEmail;
+        string adminTitle;
         string electionTitle;
         string organizationTitle;
     }
@@ -72,21 +76,68 @@ contract Election {
     function setElectionDetails(
         string memory _adminName,
         string memory _adminEmail,
+        string memory _adminTitle,
         string memory _electionTitle,
         string memory _organizationTitle,
-        address _organizerAddress,
-        string memory _signiturePublicKey
+        address _organizerAddress
     ) public onlyAdmin {
         electionDetails = ElectionDetails(
             _adminName,
             _adminEmail,
+            _adminTitle,
             _electionTitle,
             _organizationTitle
         );
         organizer.organizerAddress = _organizerAddress;
-        organizer.signiturePublicKey = _signiturePublicKey;
         start = true;
         end = false;
+    }
+
+    // Get Elections details
+    function getAdminName() public view returns (string memory) {
+        return electionDetails.adminName;
+    }
+
+    function getAdminEmail() public view returns (string memory) {
+        return electionDetails.adminEmail;
+    }
+
+    function getAdminTitle() public view returns (string memory) {
+        return electionDetails.adminTitle;
+    }
+
+    function getElectionTitle() public view returns (string memory) {
+        return electionDetails.electionTitle;
+    }
+
+    function getOrganizationTitle() public view returns (string memory) {
+        return electionDetails.organizationTitle;
+    }
+
+    // Get candidates count
+    function getTotalCandidate() public view returns (uint256) {
+        // Returns total number of candidates
+        return candidateCount;
+    }
+
+    function setSigniturePublicKey(string memory _publicKey)
+        public
+        onlyOrganizer
+    {
+        organizer.signiturePublicKey = _publicKey;
+    }
+
+    // Get Organizer details
+    function getOrganizerAddress() public view returns (address) {
+        return organizer.organizerAddress;
+    }
+
+    function getOrganizerSigniturePublicKey()
+        public
+        view
+        returns (string memory)
+    {
+        return organizer.signiturePublicKey;
     }
 
     // structure that stores voter data
@@ -114,14 +165,11 @@ contract Election {
             phone: _phone,
             votingPassword: _votingPassword,
             eligible: false,
-            //hasVoted: false,
             isRegistered: true,
             blindedVote: "",
             signedBlindedVote: ""
         });
         Voters[msg.sender] = newVoter;
-        //voters.push(msg.sender);
-        //voterCount += 1;
     }
 
     // Verify voter
@@ -133,16 +181,19 @@ contract Election {
     }
 
     // blinded message is recorded in order to verify whether the Organizer has provided a correct signature on the blinded msg
-    function requestBlindSig(string memory blindedVote) public {
+    function requestBlindSig(string memory _blindedVote) public {
         require(Voters[msg.sender].eligible);
-        blindedVotes[blindedVote] = msg.sender;
+        Voters[msg.sender].eligible = false;
+        Voters[msg.sender].blindedVote = _blindedVote;
         //emit RequestToBlindlySign(msg.sender);
     }
 
     // requested blindSig is recorded on the blockchain for auditing purposes
-    function writeBlindSig(address _voter, string memory blindSig) onlyOrganizer public {
+    function writeBlindSig(address _voter, string memory blindSig)
+        public
+        onlyOrganizer
+    {
         Voters[_voter].signedBlindedVote = blindSig;
-        Voters[_voter].eligible = false;
     }
 
     struct Ballot {
@@ -150,32 +201,41 @@ contract Election {
         string secretKey;
         string signedVote;
     }
+
     // if the blind signature hasn't been used yet and is correct, the vote is valid
-    function Vote(uint256 _choiceCode, string memory _secretKey, string memory _signedVote) public {
+    function vote(
+        uint256 _choiceCode,
+        string memory _secretKey,
+        string memory _signedVote
+    ) public {
         Ballot memory newBallot = Ballot({
             choiceCode: _choiceCode,
             secretKey: _secretKey,
-            signedVote: _signedVote 
+            signedVote: _signedVote
         });
         Ballots[numOfBallots] = newBallot;
-        //Ballots[choiceCode].secretKey = 
-        //require(start == true);
-        //require(end == false);
-        //require(!usedSignatures[signedVote]);
-        //usedSignatures[signedVote] = true;
-        //candidateDetails[choiceCode].voteCount += 1;
-        //verifyBlindSig(choiceCode, blindedVote, strippedSignedVote);
-        //votes[choiceCode] = votes[choiceCode].add(1);
-        //emit voteSuccess(msg.sender,choiceCode);
+        numOfBallots++;
     }
 
-    function validBallots(string memory _signedVote , uint256 _choiceCode) public onlyOrganizer {
-        require(!usedSignatures[_signedVote],"This signature has been used");
-        require(!end,"Vote is not finished");
+    function validBallots(string memory _signedVote, uint256 _choiceCode)
+        public
+        onlyOrganizer
+    {
+        require(!usedSignatures[_signedVote], "This signature has been used");
+        require(!end, "Vote is not finished");
         usedSignatures[_signedVote] = true;
         candidateDetails[_choiceCode].voteCount += 1;
     }
-    
+
+    // Get election start and end values
+    function getStart() public view returns (bool) {
+        return start;
+    }
+
+    function getEnd() public view returns (bool) {
+        return end;
+    }
+
     // End election
     function endElection() public onlyAdmin {
         end = true;
