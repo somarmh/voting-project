@@ -5,6 +5,7 @@ contract Election {
     address public admin;
     OrganizerDetails public organizer;
     uint256 public candidateCount;
+    uint256 voterCount;
     uint256 numOfBallots;
     mapping(uint256 => Candidate) public candidateDetails;
     mapping(address => Voter) public Voters; // array of eligible voters
@@ -93,6 +94,11 @@ contract Election {
         end = false;
     }
 
+    // Check if the signiture has been used
+    function signitureIsUsed(string memory _sig) public view returns (bool) {
+        return usedSignatures[_sig];
+    }
+
     // Get Elections details
     function getAdminName() public view returns (string memory) {
         return electionDetails.adminName;
@@ -140,6 +146,13 @@ contract Election {
         return organizer.signiturePublicKey;
     }
 
+    // Get voters count
+    function getTotalVoter() public view returns (uint256) {
+        // Returns total number of voters
+        return voterCount;
+    }
+
+    address[] public voters; // Array of address to store address of voters
     // structure that stores voter data
     struct Voter {
         address voterAddress;
@@ -147,7 +160,7 @@ contract Election {
         string phone;
         string votingPassword;
         bool eligible;
-        //bool hasVoted;
+        bool hasVoted;
         bool isRegistered;
         string blindedVote;
         string signedBlindedVote;
@@ -165,11 +178,14 @@ contract Election {
             phone: _phone,
             votingPassword: _votingPassword,
             eligible: false,
+            hasVoted: false,
             isRegistered: true,
             blindedVote: "",
             signedBlindedVote: ""
         });
         Voters[msg.sender] = newVoter;
+        voters.push(msg.sender);
+        voterCount += 1;
     }
 
     // Verify voter
@@ -183,7 +199,7 @@ contract Election {
     // blinded message is recorded in order to verify whether the Organizer has provided a correct signature on the blinded msg
     function requestBlindSig(string memory _blindedVote) public {
         require(Voters[msg.sender].eligible);
-        Voters[msg.sender].eligible = false;
+        Voters[msg.sender].hasVoted = true;
         Voters[msg.sender].blindedVote = _blindedVote;
         //emit RequestToBlindlySign(msg.sender);
     }
@@ -225,6 +241,10 @@ contract Election {
         require(!end, "Vote is not finished");
         usedSignatures[_signedVote] = true;
         candidateDetails[_choiceCode].voteCount += 1;
+    }
+
+    function getAdmin() public view returns (address) {
+        return admin;
     }
 
     // Get election start and end values
