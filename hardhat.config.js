@@ -11,7 +11,7 @@ module.exports = {
   },
   networks: {
     goerli: {
-      url: "https://eth-goerli.g.alchemy.com/v2/NT3DEeYSAfOQvhBuILt1by0P0deqhm16",
+      url: "https://goerli.infura.io/v3/bbd0bbc468584ea5ae87cffdd46339f6",
       accounts: [
         "4a2b212a7660800dd8cfa36a26b00ae1a8005c943cf73dc0b21f86e8e99682b2"
       ] // add your Ethereum key here (private key)
