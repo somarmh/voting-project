@@ -11,8 +11,8 @@ contract Election {
     mapping(uint256 => Candidate) public candidateDetails; // array of candidates
     mapping(address => Voter) public Voters; // array of eligible voters
     mapping(string => address) public blindedVotes; // array of blinded votes
-    mapping(string => bool) public usedSignatures; // array of used signatures
-    mapping(uint256 => Ballot) public Ballots; // array of used signatures
+    mapping(uint256 => Ballot) public Ballots; // array of Ballots
+    mapping(string => bool) public usedSignatures;
     ElectionDetails public electionDetails;
     bool public start;
     bool public end;
@@ -242,7 +242,6 @@ contract Election {
         require(Voters[msg.sender].eligible);
         Voters[msg.sender].hasVoted = true;
         Voters[msg.sender].blindedVote = _blindedVote;
-        //emit RequestToBlindlySign(msg.sender);
     }
 
     // requested blindSig is recorded on the blockchain for auditing purposes

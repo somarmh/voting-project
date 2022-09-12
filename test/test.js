@@ -5,43 +5,6 @@ describe("Testing the Election Contract", function () {
     this.timeout(60000);
     let Election;
     let election;
-    /*
-    it("should set the admin when deploying", async () => {
-        Election = await ethers.getContractFactory("Election");
-        election = await Election.deploy();
-        const [signer] = await ethers.getSigners();
-        console.log("Your contract is deployed! Here is its address " + election.address);
-        console.log(signer.address);
-        let admin = await election.admin();
-        //console.log(admin.address);
-        expect(admin).to.equal(signer.address);
-    });
-    
-    it("should add candidates", async () => {
-        Election = await ethers.getContractFactory("Election");
-        election = await Election.deploy();
-        const [admin, otherAccount] = await ethers.getSigners();
-        console.log(admin.address);
-        console.log(otherAccount.address);
-        election.connect(otherAccount).addCandidate("somar" , "vote me!");
-        //let candidateCount = await election.candidateCount();
-        let candidateDetails = await election.candidateDetails(0);
-        //console.log(candidateCount);
-        console.log(candidateDetails);
-        //expect(candidateCount).to.equal(1);
-        //console.log(otherAccount.address);
-    });
-    
-    it("should set the election details", async () => {
-        Election = await ethers.getContractFactory("Election");
-        election = await Election.deploy();
-        election.setElectionDetails("name","email","etitle","otitle","0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
-        electionDetails = await election.electionDetails();
-        organizer = await election.organizer();
-        console.log(electionDetails);
-        console.log(organizer);
-    });
-*/
     it("Final test", async () => {
         Election = await ethers.getContractFactory("Election");
         election = await Election.deploy();
